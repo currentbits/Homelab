@@ -65,13 +65,13 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
-   vim
    curl
    tmux
    docker
    neofetch
    git
    zsh
+   neovim
   ];
 
   # Copy neofetch config into each user's home on rebuild
