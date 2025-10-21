@@ -87,6 +87,16 @@
       fi
     fi
   ''; 
+
+  #enable tailscale
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "both";
+  };
+  #alter firewall for tailscale
+  networking.firewall.checkReversePath = "loose";
+  #autostart tailscale on boot
+  systemd.services.tailscaled.wantedBy = [ "multi-user.target" ];  
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
