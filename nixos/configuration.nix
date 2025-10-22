@@ -72,7 +72,17 @@
    git
    zsh
    neovim
+   wget
+   opentofu
+   fluxcd
+   age
+   sops
+   kubectl
+   k9s
   ];
+
+  #enviroment setup
+  environment.etc."nixos".source = "/home/willem/development/homelab/nixos";
 
   # Copy neofetch config into each user's home on rebuild
   environment.etc."skel/.config/neofetch/config.conf".source = ./dotfiles/neofetch/config.conf;
