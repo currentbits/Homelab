@@ -1,16 +1,14 @@
 ---
-- name: Deploy Portainer using Docker Compose (Production)
+- name: Deploy Portainer using Docker Compose (started by deploy user)
   hosts: all
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy') }}"
-    portainer_data_path: "/opt/docker/portainer/portainer_data"
+    portainer_data_path: "/opt/docker/portainer_data"
     portainer_port: 9443
     compose_file_path: "/opt/docker/portainer"
 
   tasks:
-    # ------------------------------
-    # Ensure Portainer data directory exists
-    # ------------------------------
+    # Ensure data directory exists
     - name: Create Portainer data directory
       file:
         path: "{{ portainer_data_path }}"
@@ -19,10 +17,8 @@
         group: "{{ deploy_user }}"
         mode: '0755'
 
-    # ------------------------------
     # Ensure /opt/docker directory exists
-    # ------------------------------
-    - name: Create Docker Compose directory in /opt/docker
+    - name: Create Docker Compose directory
       file:
         path: "{{ compose_file_path }}"
         state: directory
@@ -30,10 +26,8 @@
         group: root
         mode: '0755'
 
-    # ------------------------------
-    # Write docker-compose.yml
-    # ------------------------------
-    - name: Create docker-compose.yml in /opt/docker
+    # Create docker-compose.yml
+    - name: Create docker-compose.yml
       copy:
         dest: "{{ compose_file_path }}/docker-compose.yml"
         owner: root
@@ -41,7 +35,6 @@
         mode: '0644'
         content: |
           version: "3.9"
-
           services:
             portainer:
               image: portainer/portainer-ce:latest
@@ -52,20 +45,16 @@
               volumes:
                 - "{{ portainer_data_path }}:/data"
                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
-              user: "{{ deploy_user }}"
+          # NOTE: no 'user:' inside container
 
-    # ------------------------------
-    # Ensure deploy user can run Docker Compose in /opt/docker
-    # ------------------------------
-    - name: Add deploy user to docker group (if not already)
+    # Ensure deploy user is in docker group
+    - name: Add deploy user to docker group
       user:
         name: "{{ deploy_user }}"
         groups: docker
         append: yes
 
-    # ------------------------------
-    # Deploy Portainer using Docker Compose
-    # ------------------------------
+    # Start stack as deploy user
     - name: Deploy Portainer stack
       command: docker compose up -d
       args:
@@ -74,9 +63,7 @@
       environment:
         DOCKER_BUILDKIT: 1
 
-    # ------------------------------
-    # Cleanup old dangling images
-    # ------------------------------
-    - name: Clean up dangling Docker images
+    # Cleanup dangling images
+    - name: Clean up dangling images
       command: docker image prune -f
       become_user: "{{ deploy_user }}"
