@@ -79,6 +79,7 @@
    sops
    kubectl
    k9s
+   ansible	
   ];
 
   #enviroment setup
