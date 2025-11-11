@@ -1,6 +1,6 @@
 ---
 - name: Update and upgrade Ubuntu servers
-  hosts: ubuntu_servers
+  hosts: all
   gather_facts: yes
 
   tasks:
