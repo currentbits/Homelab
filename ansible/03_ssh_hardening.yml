@@ -10,7 +10,7 @@
         line: "{{ item.line }}"
         state: present
       loop:
-        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin prohibit-password' }
         - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
         - { regexp: '^PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
 
