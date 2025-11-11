@@ -1,9 +1,14 @@
 ---
-- name: Install Docker Engine
+- name: Install Docker Engine on Ubuntu 24.04
   hosts: all
+  become: yes
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy') }}"
+
   tasks:
+    # ------------------------------
+    # Remove old/conflicting Docker packages
+    # ------------------------------
     - name: Remove old Docker packages
       apt:
         name:
@@ -14,8 +19,12 @@
           - runc
         state: absent
         purge: yes
+        update_cache: yes
 
-    - name: Install prerequisites
+    # ------------------------------
+    # Install prerequisites
+    # ------------------------------
+    - name: Install prerequisites for Docker repo
       apt:
         name:
           - apt-transport-https
@@ -26,6 +35,9 @@
         state: present
         update_cache: yes
 
+    # ------------------------------
+    # Add Docker GPG key
+    # ------------------------------
     - name: Add Docker GPG key
       shell: |
         install -m 0755 -d /etc/apt/keyrings
@@ -33,20 +45,25 @@
       args:
         creates: /etc/apt/keyrings/docker.gpg
 
+    # ------------------------------
+    # Add Docker apt repository (single-line, valid)
+    # ------------------------------
     - name: Add Docker repository for Ubuntu 24.04
       copy:
         dest: /etc/apt/sources.list.d/docker.list
-        content: |
-           deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] \
-           https://download.docker.com/linux/ubuntu \
-           {{ ansible_distribution_release }} stable
-      notify: Update apt cache
+        content: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
 
+    # ------------------------------
+    # Update apt cache
+    # ------------------------------
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install Docker packages
+    # ------------------------------
+    # Install Docker packages
+    # ------------------------------
+    - name: Install Docker Engine packages
       apt:
         name:
           - docker-ce
@@ -57,12 +74,18 @@
         state: present
         update_cache: yes
 
+    # ------------------------------
+    # Ensure Docker service is running
+    # ------------------------------
     - name: Ensure Docker service is running
       systemd:
         name: docker
         enabled: yes
         state: started
 
+    # ------------------------------
+    # Ensure docker group exists and add deploy user
+    # ------------------------------
     - name: Ensure docker group exists
       group:
         name: docker
