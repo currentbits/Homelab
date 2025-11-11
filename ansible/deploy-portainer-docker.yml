@@ -46,7 +46,6 @@
                 - "{{ portainer_data_path }}:/data"
                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
               networks:
-                - backend
                 - proxy
               labels:
                 - "traefik.enable=true"
@@ -57,6 +56,9 @@
                 - "traefik.http.services.portainer.loadbalancer.server.port=9443"
                 - "traefik.http.routers.portainer.middlewares=auth"
                 - "traefik.docker.network=proxy" 
+          networks:
+            proxy:
+              external: true     
           # NOTE: no 'user:' inside container
 
     # Ensure deploy user is in docker group
