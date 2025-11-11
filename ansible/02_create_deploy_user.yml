@@ -2,25 +2,6 @@
 - name: Create secure deploy user
   hosts: all
 
-  pre_tasks:
-    - name: Ensure python3 and pip are installed
-      package:
-        name:
-          - python3
-          - python3-pip
-        state: present
-
-    - name: Ensure passlib is installed for password hashing
-      pip:
-        name: passlib
-        state: present
-      register: passlib_install
-      ignore_errors: yes
-
-    - name: Debug passlib installation result
-      debug:
-        msg: "passlib installation: {{ passlib_install }}"
-
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy', true) }}"
     deploy_user_pubkey: "{{ lookup('env', 'DEPLOY_USER_SSH_PUBKEY') }}"
