@@ -8,14 +8,6 @@
     compose_file_path: "/opt/docker/portainer"
 
   tasks:
-    # Ensure data directory exists
-    - name: Create Portainer data directory
-      file:
-        path: "{{ portainer_data_path }}"
-        state: directory
-        owner: "{{ deploy_user }}"
-        group: "{{ deploy_user }}"
-        mode: '0755'
 
     # Ensure /opt/docker directory exists
     - name: Create Docker Compose directory
@@ -24,6 +16,15 @@
         state: directory
         owner: root
         group: root
+        mode: '0755'
+
+    # Ensure data directory exists
+    - name: Create Portainer data directory
+      file:
+        path: "{{ portainer_data_path }}"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
         mode: '0755'
 
     # Create docker-compose.yml
