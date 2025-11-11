@@ -3,7 +3,7 @@
   hosts: all
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy') }}"
-    portainer_data_path: "/opt/docker/portainer_data"
+    portainer_data_path: "/opt/docker/portainer/portainer_data"
     portainer_port: 9443
     compose_file_path: "/opt/docker/portainer"
 
@@ -25,16 +25,6 @@
         owner: root
         group: root
         mode: '0755'
-
-    - name: Fix Portainer data directory permissions
-      file:
-         path: "{{ portainer_data_path }}"
-         state: directory
-         owner: root
-         group: docker
-         recurse: yes
-         mode: '0775'
-
 
     # Create docker-compose.yml
     - name: Create docker-compose.yml
