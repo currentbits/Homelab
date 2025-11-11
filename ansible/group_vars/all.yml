@@ -1,0 +1,6 @@
+docker_user: xcad
+ssh_port: 22
+allowed_ports:
+  - 22
+  - 80
+  - 443

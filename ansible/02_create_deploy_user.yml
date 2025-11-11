@@ -1,0 +1,31 @@
+- name: Create deploy user with SSH access
+  hosts: all
+  vars:
+   docker_user: xcad
+   docker_user_ssh_pubkey: "{{ lookup('env','DOCKER_USER_SSH_PUBKEY') }}"
+
+  tasks:
+    - name: Ensure deploy user exists
+      user:
+        name: "{{ docker_user }}"
+        shell: /bin/bash
+        groups: sudo,docker
+        append: yes
+        state: present
+
+    - name: Create .ssh directory for deploy user
+      file:
+        path: "/home/{{ docker_user }}/.ssh"
+        state: directory
+        owner: "{{ docker_user }}"
+        group: "{{ docker_user }}"
+        mode: 0700
+
+    - name: Add SSH public key for deploy user
+      copy:
+        content: "{{ docker_user_ssh_pubkey }}"
+        dest: "/home/{{ docker_user }}/.ssh/authorized_keys"
+        owner: "{{ docker_user }}"
+        group: "{{ docker_user }}"
+        mode: 0600
+
