@@ -2,6 +2,17 @@
 - hosts: all
   become: true
   gather_facts: yes
+  
+  pre_tasks:
+    - name: Ensure Ansible temporary directory exists
+      file:
+        path: /var/tmp/ansible
+        state: directory
+        mode: '1777'
+        owner: root
+        group: root
+      become: true
+  
 
   vars:
     autoremove: true
