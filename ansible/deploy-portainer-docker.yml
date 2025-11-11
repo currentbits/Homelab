@@ -26,6 +26,16 @@
         group: root
         mode: '0755'
 
+    - name: Fix Portainer data directory permissions
+      file:
+         path: "{{ portainer_data_path }}"
+         state: directory
+         owner: root
+         group: docker
+         recurse: yes
+         mode: '0775'
+
+
     # Create docker-compose.yml
     - name: Create docker-compose.yml
       copy:
