@@ -9,6 +9,18 @@
     semaphore_secret_dashboard: "{{ lookup('env','TRAEFIK_DASHBOARD_CREDENTIALS') }}"
 
   tasks:
+    # ------------------------------
+    # Ensure external Docker network "proxy" exists
+    # ------------------------------
+    - name: Ensure external Docker network proxy exists
+      docker_network:
+        name: proxy
+        driver: bridge
+        state: present
+        scope: local
+        external: yes
+
+
     - name: Ensure Traefik directory exists
       file:
         path: "{{ traefik_path }}"
