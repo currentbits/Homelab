@@ -1,0 +1,152 @@
+---
+- name: Deploy Traefik with Docker Compose
+  hosts: all
+  vars:
+    deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy') }}"
+    traefik_path: "/opt/docker/traefik"
+    traefik_compose_file: "{{ traefik_path }}/docker-compose.yml"
+    semaphore_secret_cf: "{{ lookup('env','CF_API_TOKEN') }}"
+    semaphore_secret_dashboard: "{{ lookup('env','TRAEFIK_DASHBOARD_CREDENTIALS') }}"
+
+  tasks:
+    - name: Ensure Traefik directory exists
+      file:
+        path: "{{ traefik_path }}"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+
+    - name: Ensure Traefik data directory exists
+      file:
+        path: "{{ traefik_path }}/data"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+
+    - name: Ensure acme.json exists with correct permissions
+      copy:
+        dest: "{{ traefik_path }}/data/acme.json"
+        content: "{}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0600'
+      # Do not overwrite if it exists
+      force: no
+
+    - name: Create Traefik configuration file
+      copy:
+        dest: "{{ traefik_path }}/data/traefik.yml"
+        content: |
+          api:
+            dashboard: true
+            debug: true
+          entryPoints:
+            http:
+              address: ":80"
+              http:
+                redirections:
+                  entryPoint:
+                    to: https
+                    scheme: https
+            https:
+              address: ":443"
+          serversTransport:
+            insecureSkipVerify: true
+          providers:
+            docker:
+              endpoint: "unix:///var/run/docker.sock"
+              exposedByDefault: false
+          certificatesResolvers:
+            cloudflare:
+              acme:
+                email: willem.vz@gmail.com
+                storage: acme.json
+                caServer: https://acme-v02.api.letsencrypt.org/directory
+                dnsChallenge:
+                  provider: cloudflare
+                  resolvers:
+                    - "1.1.1.1:53"
+                    - "1.0.0.1:53"
+          log:
+            level: DEBUG
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+
+    - name: Create Cloudflare secret file from Semaphore secret
+      copy:
+        dest: "{{ traefik_path }}/cf_api_token.txt"
+        content: "{{ semaphore_secret_cf }}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0600'
+
+    - name: Create .env file from Semaphore secret
+      copy:
+        dest: "{{ traefik_path }}/.env"
+        content: |
+          TRAEFIK_DASHBOARD_CREDENTIALS={{ semaphore_secret_dashboard }}
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0600'
+
+    - name: Create docker-compose.yml
+      copy:
+        dest: "{{ traefik_compose_file }}"
+        content: |
+          version: "3.9"
+          services:
+            traefik:
+              image: traefik:latest
+              container_name: traefik
+              restart: unless-stopped
+              security_opt:
+                - no-new-privileges:true
+              networks:
+                - proxy
+              ports:
+                - 80:80
+                - 443:443
+              environment:
+                CF_DNS_API_TOKEN_FILE: /run/secrets/cf_api_token
+                TRAEFIK_DASHBOARD_CREDENTIALS: ${TRAEFIK_DASHBOARD_CREDENTIALS}
+              secrets:
+                - cf_api_token
+              env_file: .env
+              volumes:
+                - /etc/localtime:/etc/localtime:ro
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+                - ./data/traefik.yml:/traefik.yml:ro
+                - ./data/acme.json:/acme.json
+              labels:
+                - "traefik.enable=true"
+                - "traefik.http.routers.traefik-http.entrypoints=http"
+                - "traefik.http.routers.traefik-http.rule=Host(`traefik-dashboard.currentbits.net`)"
+                - "traefik.http.routers.traefik-http.middlewares=https-redirect"
+                - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+                - "traefik.http.routers.traefik-https.entrypoints=https"
+                - "traefik.http.routers.traefik-https.rule=Host(`traefik-dashboard.currentbits.net`)"
+                - "traefik.http.routers.traefik-https.tls=true"
+                - "traefik.http.routers.traefik-https.tls.certresolver=cloudflare"
+                - "traefik.http.routers.traefik-https.service=api@internal"
+                - "traefik.http.routers.traefik-https.middlewares=auth"
+                - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_CREDENTIALS}"
+          secrets:
+            cf_api_token:
+              file: ./cf_api_token.txt
+          networks:
+            proxy:
+              external: true
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+
+    - name: Deploy Traefik stack
+      command: docker compose up -d
+      args:
+        chdir: "{{ traefik_path }}"
+      become_user: "{{ deploy_user }}"
+      environment:
+        DOCKER_BUILDKIT: 1
