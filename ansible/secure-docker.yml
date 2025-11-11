@@ -1,0 +1,28 @@
+---
+- name: Configure Docker securely
+  hosts: all
+  tasks:
+    - name: Configure Docker daemon
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "3"
+            },
+            "no-new-privileges": true,
+            "icc": false,
+            "userns-remap": "default",
+            "live-restore": true
+          }
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart Docker to apply configuration
+      systemd:
+        name: docker
+        state: restarted
+        enabled: yes
