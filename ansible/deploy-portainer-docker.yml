@@ -35,17 +35,28 @@
         group: root
         mode: '0644'
         content: |
-          version: "3.9"
           services:
             portainer:
               image: portainer/portainer-ce:latest
               container_name: portainer
+
               restart: always
-              ports:
-                - "{{ portainer_port }}:9443"
+              
               volumes:
                 - "{{ portainer_data_path }}:/data"
                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
+              networks:
+                - backend
+                - proxy
+              labels:
+                - "traefik.enable=true"
+                - "traefik.http.routers.portainer.rule=Host(`portainer.currentbits.net`)"
+                - "traefik.http.routers.portainer.entrypoints=https"
+                - "traefik.http.routers.portainer.tls=true"
+                - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
+                - "traefik.http.services.portainer.loadbalancer.server.port=9443"
+                - "traefik.http.routers.portainer.middlewares=auth"
+                - "traefik.docker.network=proxy" 
           # NOTE: no 'user:' inside container
 
     # Ensure deploy user is in docker group
