@@ -1,31 +1,57 @@
-- name: Create deploy user with SSH access
+---
+- name: Create secure deploy user
   hosts: all
+
   vars:
-   docker_user: xcad
-   docker_user_ssh_pubkey: "{{ lookup('env','DOCKER_USER_SSH_PUBKEY') | default('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDUMMYKEYEXAMPLE user@host') }}"
+    deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy', true) }}"
+    deploy_user_pubkey: "{{ lookup('env', 'DEPLOY_USER_SSH_PUBKEY') }}"
+    deploy_user_password: "{{ lookup('env', 'DEPLOY_USER_PASSWORD') | password_hash('sha512') }}"
 
   tasks:
-    - name: Ensure deploy user exists
-      user:
-        name: "{{ docker_user }}"
-        shell: /bin/bash
-        groups: sudo
-        append: yes
+    - name: Ensure deploy group exists
+      group:
+        name: "{{ deploy_user }}"
         state: present
 
-    - name: Create .ssh directory for deploy user
+    - name: Create deploy user with password
+      user:
+        name: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        shell: /bin/bash
+        create_home: yes
+        password: "{{ deploy_user_password }}"
+        state: present
+
+    - name: Add authorized key for deploy user
+      authorized_key:
+        user: "{{ deploy_user }}"
+        key: "{{ deploy_user_pubkey }}"
+        state: present
+
+    - name: Add deploy user to sudoers (no password)
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: "^{{ deploy_user }} "
+        line: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL"
+
+    - name: Ensure home directory has correct permissions
       file:
-        path: "/home/{{ docker_user }}/.ssh"
-        state: directory
-        owner: "{{ docker_user }}"
-        group: "{{ docker_user }}"
-        mode: 0700
+        path: "/home/{{ deploy_user }}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
 
-    - name: Add SSH public key for deploy user
-      copy:
-        content: "{{ docker_user_ssh_pubkey }}"
-        dest: "/home/{{ docker_user }}/.ssh/authorized_keys"
-        owner: "{{ docker_user }}"
-        group: "{{ docker_user }}"
-        mode: 0600
-
+    - name: Notify Discord that the task is done
+      uri:
+        url: "{{ lookup('env', 'DISCORD_WEBHOOK_URL') }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body: |
+          {
+            "content": "✅ Task '{{ ansible_play_name }}' completed successfully on host {{ inventory_hostname }}."
+          }
+        body_format: json
+        status_code: 204
+      no_log: true

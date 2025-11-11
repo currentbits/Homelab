@@ -1,5 +1,5 @@
 ---
-- name: Update and upgrade Ubuntu servers
+- name: Update and upgrade Ubuntu/debian servers
   hosts: all
   gather_facts: yes
 
