@@ -26,14 +26,13 @@
         mode: '0755'
 
     - name: Ensure acme.json exists with correct permissions
-      copy:
-        dest: "{{ traefik_path }}/data/acme.json"
-        content: "{}"
+      file:
+        path: "{{ traefik_path }}/data/acme.json"
+        state: touch
         owner: "{{ deploy_user }}"
         group: "{{ deploy_user }}"
         mode: '0600'
-      # Do not overwrite if it exists
-      force: no
+
 
     - name: Create Traefik configuration file
       copy:
