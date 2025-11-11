@@ -1,5 +1,6 @@
 ---
 - name: Update and upgrade Ubuntu servers
+  hosts: all
   become: true
   gather_facts: yes
 
