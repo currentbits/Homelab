@@ -9,7 +9,7 @@
       user:
         name: "{{ docker_user }}"
         shell: /bin/bash
-        groups: sudo,docker
+        groups: sudo
         append: yes
         state: present
 
