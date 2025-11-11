@@ -1,7 +1,6 @@
 ---
 - name: Install Docker Engine on Debian
   hosts: all
-  become: true
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy') }}"
     docker_arch: "amd64"  # Change if needed for arm64
