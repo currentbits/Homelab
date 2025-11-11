@@ -2,7 +2,7 @@
   hosts: all
   vars:
    docker_user: xcad
-   docker_user_ssh_pubkey: "{{ lookup('env','DOCKER_USER_SSH_PUBKEY') }}"
+   docker_user_ssh_pubkey: "{{ lookup('env','DOCKER_USER_SSH_PUBKEY') | default('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDUMMYKEYEXAMPLE user@host') }}"
 
   tasks:
     - name: Ensure deploy user exists
