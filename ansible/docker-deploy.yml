@@ -1,15 +1,16 @@
 ---
 - name: Install Docker Engine on Ubuntu 24.04
   hosts: all
-  become: yes
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy') }}"
+    docker_arch: "amd64"         # adjust if using arm64
+    docker_ubuntu_release: "noble"
 
   tasks:
     # ------------------------------
-    # Remove old/conflicting Docker packages
+    # Remove old Docker packages
     # ------------------------------
-    - name: Remove old Docker packages
+    - name: Remove old/conflicting Docker packages
       apt:
         name:
           - docker
@@ -24,7 +25,7 @@
     # ------------------------------
     # Install prerequisites
     # ------------------------------
-    - name: Install prerequisites for Docker repo
+    - name: Install prerequisites for Docker
       apt:
         name:
           - apt-transport-https
@@ -46,12 +47,20 @@
         creates: /etc/apt/keyrings/docker.gpg
 
     # ------------------------------
-    # Add Docker apt repository (single-line, valid)
+    # Remove broken docker.list if exists
+    # ------------------------------
+    - name: Remove broken docker.list if present
+      file:
+        path: /etc/apt/sources.list.d/docker.list
+        state: absent
+
+    # ------------------------------
+    # Add Docker repository (single line, valid)
     # ------------------------------
     - name: Add Docker repository for Ubuntu 24.04
       copy:
         dest: /etc/apt/sources.list.d/docker.list
-        content: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        content: "deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ docker_ubuntu_release }} stable"
 
     # ------------------------------
     # Update apt cache
