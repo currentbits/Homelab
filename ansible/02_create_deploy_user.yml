@@ -24,7 +24,7 @@
   vars:
     deploy_user: "{{ lookup('env', 'DEPLOY_USER') | default('deploy', true) }}"
     deploy_user_pubkey: "{{ lookup('env', 'DEPLOY_USER_SSH_PUBKEY') }}"
-    deploy_user_password: "{{ lookup('env', 'DEPLOY_USER_PASSWORD') | password_hash('sha512') }}"
+    deploy_user_password: "{{ lookup('env', 'DEPLOY_USER_PASSWORD') }}"
 
   tasks:
     - name: Ensure deploy group exists
