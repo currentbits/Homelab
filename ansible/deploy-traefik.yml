@@ -17,9 +17,6 @@
         name: proxy
         driver: bridge
         state: present
-        scope: local
-        external: yes
-
 
     - name: Ensure Traefik directory exists
       file:
