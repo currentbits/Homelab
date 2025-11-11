@@ -3,6 +3,9 @@
   become: true
   gather_facts: yes
   
+  environment:
+    ANSIBLE_REMOTE_TMP: /var/tmp/ansible  
+  
   pre_tasks:
     - name: Ensure Ansible temporary directory exists
       file:
