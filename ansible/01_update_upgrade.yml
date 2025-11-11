@@ -18,3 +18,17 @@
       reboot:
         msg: "Reboot after upgrade"
       when: ansible_facts.get('reboot_required', False)
+    
+    - name: Notify Discord that the task is done
+      uri:
+        url: "{{ lookup('env', 'DISCORD_WEBHOOK_URL') }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body: |
+          {
+            "content": "✅ Task '{{ ansible_play_name }}' completed successfully on host {{ inventory_hostname }}."
+          }
+        body_format: json
+        status_code: 204
+      no_log: true
