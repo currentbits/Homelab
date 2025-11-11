@@ -28,12 +28,14 @@
         key: "{{ deploy_user_pubkey }}"
         state: present
 
-    - name: Add deploy user to sudoers (no password)
+    - name: Allow docker install via sudo
       lineinfile:
         path: /etc/sudoers
         state: present
         regexp: "^{{ deploy_user }} "
-        line: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL"
+        line: "{{ deploy_user }} ALL=(ALL) NOPASSWD:/usr/bin/apt-get install -y docker-ce*, /usr/bin/systemctl enable docker, /usr/bin/systemctl start docker"
+
+
 
     - name: Ensure home directory has correct permissions
       file:
