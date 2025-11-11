@@ -1,0 +1,20 @@
+- name: Harden SSH
+  hosts: all
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+    - name: Disable root login and password auth
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+
+    - name: Reload SSH
+      service:
+        name: ssh
+        state: reloaded
