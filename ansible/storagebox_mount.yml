@@ -1,7 +1,6 @@
 ---
 - name: Mount Hetzner Storage Box CIFS/Samba Share
   hosts: all
-  become: true
   vars:
     hetzner_share_src: "//u505697.your-storagebox.de/backup"
     hetzner_mount_point: "/mnt/hetzner_storage"
