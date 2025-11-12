@@ -1,0 +1,43 @@
+---
+- name: Mount Hetzner Storage Box CIFS/Samba Share
+  hosts: all
+  become: true
+  vars:
+    hetzner_share_src: "//u505697.your-storagebox.de/backup"
+    hetzner_mount_point: "/mnt/hetzner_storage"
+    hetzner_cifs_user: "{{ lookup('env', 'HETZNER_USER') }}" 
+    hetzner_cifs_password: "{{ lookup('env', 'HETZNER_STORAGE') }}"
+    hetzner_creds_file: "/root/.hetzner_cifs_creds"
+
+  tasks:
+    - name: Ensure cifs-utils are installed
+      ansible.builtin.apt:
+        name: cifs-utils
+        state: present
+        update_cache: true
+
+    - name: Create mount point directory
+      ansible.builtin.file:
+        path: "{{ hetzner_mount_point }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create CIFS credentials file with semaphore secret password
+      ansible.builtin.copy:
+        dest: "{{ hetzner_creds_file }}"
+        content: |
+          username={{ hetzner_cifs_user }}
+          password={{ hetzner_cifs_password }}
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Mount Hetzner CIFS/Samba share
+      ansible.posix.mount:
+        path: "{{ hetzner_mount_point }}"
+        src: "{{ hetzner_share_src }}"
+        fstype: cifs
+        opts: "credentials={{ hetzner_creds_file }},file_mode=0644,dir_mode=0755"
+        state: present
