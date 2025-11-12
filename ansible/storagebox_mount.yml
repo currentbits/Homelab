@@ -6,7 +6,7 @@
     hetzner_mount_point: "/mnt/hetzner_storage"
     hetzner_cifs_user: "{{ lookup('env', 'HETZNER_USER') }}" 
     hetzner_cifs_password: "{{ lookup('env', 'HETZNER_STORAGE') }}"
-    hetzner_creds_file: "/root/.hetzner_cifs_creds"
+    hetzner_creds_file: "/home/"
 
   tasks:
     - name: Ensure cifs-utils are installed
