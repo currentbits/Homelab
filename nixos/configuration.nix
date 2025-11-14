@@ -79,7 +79,9 @@
    sops
    kubectl
    k9s
-   ansible	
+   ansible
+   terraform	
+   lazygit
   ];
 
   #enviroment setup
